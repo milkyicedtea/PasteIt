@@ -1,4 +1,9 @@
 /target
+/node_modules
+/.tanstack
 /.idea
+/dist
 
+# ignore real env files
+docker-compose.yml
 .env
