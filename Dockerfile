@@ -1,42 +1,51 @@
-# Build
-FROM lukemathwalker/cargo-chef:latest-rust-1 as chef
+# Frontend build
+FROM oven/bun:slim AS frontend-builder
 WORKDIR /app
 
-FROM chef as planner
-COPY . .
+COPY package.json bun.lock vite.config.ts tsconfig.json index.html ./
+COPY src/client ./src/client
+COPY dist ./dist
+RUN bun ci && bun run build
+
+# Build stage with cargo-chef for dependency caching
+FROM rust:1.90-slim AS chef
+
+RUN cargo install cargo-chef
+WORKDIR /app
+
+# Prepare recipe
+FROM chef AS planner
+COPY Cargo.toml Cargo.lock ./
+COPY src/server ./src/server
 RUN cargo chef prepare --recipe-path recipe.json
 
-FROM chef as builder
+# Build dependencies (this layer is cached)
+FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
-
-# Build dependencies
 RUN cargo chef cook --release --recipe-path recipe.json
 
 # Build application
-COPY . .
+COPY Cargo.toml Cargo.lock ./
+COPY src/server ./src/server
 RUN cargo build --release
 
-# Create smaller image for exec
-FROM ubuntu:24.04
+# Runtime stage
+FROM debian:trixie-slim
 WORKDIR /app
 
-# Install required runtime
-RUN apt-get update && apt-get install -y \
-    libssl-dev ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+# Install CA certificates for HTTPS
+RUN apt-get update && \
+  apt-get install -y ca-certificates && \
+  rm -rf /var/lib/apt/lists/*
 
-# Create secrets directory
-RUN mkdir -p /run/secrets
+# Rust binary
+COPY --from=builder /app/target/release/pasteit /app/pasteit
 
-# Copy the compiled rust binary
-COPY --from=builder /app/target/release/PasteIt-Backend /app/PasteIt-Backend
+# Built frontend
+COPY --from=frontend-builder /app/dist /app/dist
 
-# Create debug script
-RUN echo '#!/bin/bash\n\
-echo "Contents of /run/secrets:"\n\
-ls -la /run/secrets/\n\
-echo "Starting application..."\n\
-RUST_BACKTRACE=1 /app/PasteIt-Backend' > /app/start.sh
+# Expose port
+EXPOSE 8000
 
-RUN chmod +x /app/start.sh
-ENTRYPOINT ["/app/start.sh"]
+# Run the application
+CMD ["/app/pasteit"]

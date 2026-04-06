@@ -1,36 +1,52 @@
 use std::net::SocketAddr;
 use axum::{Router};
 use axum::routing::get;
+use tower_http::services::{ServeDir, ServeFile};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::{Config, SwaggerUi};
 use crate::routes::pastes::pastes_router;
 use crate::utils::appstate::AppState;
 use crate::utils::cors::create_cors_layer;
 use crate::utils::database_config::get_db_pool;
-use crate::utils::env::load_env;
 use crate::utils::swagger::ApiDoc;
 
 mod utils;
 mod routes;
 
 
-
 #[tokio::main]
 async fn main() {
-    load_env().await;
+    dotenvy::dotenv().ok();
 
     let pool = get_db_pool("DB_URL").await;
 
     let state = AppState { pool };
 
+    // vite assets
+    let assets_service = ServeDir::new("./dist/assets");
+
+    // full dist directory
+    let dist_serivce = ServeDir::new("./dist");
+
+    // spa index.html fallback
+    let index_file = ServeFile::new("./dist/index.html");
+
     let app = Router::new()
-        .nest("/api",
-        Router::new()
-            .nest("/pastes", pastes_router())
-            .route("/test", get(|| async {
-                "Hello World!"
-            }))
+        // API routes
+        .nest(
+            "/api",
+            Router::new()
+                .nest("/pastes", pastes_router())
+                .route("/test", get(|| async {
+                    "Hello World!"
+                }))
         )
+
+        // Static routes
+        .nest_service("/assets", assets_service)
+        .fallback_service(dist_serivce.not_found_service(index_file))
+
+        // SwaggerUI
         .merge(SwaggerUi::new("/api/docs")
             .url("/api/docs/openapi.json", ApiDoc::openapi())
             .config(Config::default()
@@ -43,7 +59,7 @@ async fn main() {
         .layer(create_cors_layer())
         .with_state(state);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 4000));
     println!("Listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();

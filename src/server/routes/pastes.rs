@@ -19,7 +19,7 @@ pub(crate) struct Paste {
     name: Option<String>,
     paste: String,
     language: String,
-    recaptcha_token: String
+    recaptcha_token: Option<String>
 }
 
 #[derive(Serialize, Debug, ToSchema)]
@@ -59,10 +59,20 @@ pub(crate) async fn create_paste(
     headers: HeaderMap,
     Json(paste_data): Json<Paste>
 ) -> Result<Json<PasteResponse>, (StatusCode, String)> {
+    let recaptcha_secret = std::env::var("RECAPTCHA_SECRET_KEY")
+        .ok()
+        .filter(|value| !value.trim().is_empty());
 
-    let is_human = verify_recaptcha(&paste_data.recaptcha_token).await?;
-    if !is_human {
-        return Err((StatusCode::FORBIDDEN, "reCAPTCHA verification failed".to_string()));
+    if let Some(secret) = recaptcha_secret.as_deref() {
+        let token = paste_data.recaptcha_token
+            .as_deref()
+            .filter(|value| !value.trim().is_empty())
+            .ok_or((StatusCode::FORBIDDEN, "reCAPTCHA token missing".to_string()))?;
+
+        let is_human = verify_recaptcha(token, secret).await?;
+        if !is_human {
+            return Err((StatusCode::FORBIDDEN, "reCAPTCHA verification failed".to_string()));
+        }
     }
 
     let db = state.pool.get().await.unwrap();
@@ -114,9 +124,6 @@ pub(crate) async fn get_paste(
     State(state): State<AppState>,
     Path(short_id): Path<String>,
 ) -> Result<Json<PasteContentResponse>, (StatusCode, String)> {
-    // println!("Get paste called!");
-    println!("Get paste: {:?}", short_id);
-
     let big_uint = bs62::decode_num(&short_id).map_err(|e| {
         (StatusCode::BAD_REQUEST, format!("Invalid short ID: {}", e))
     })?;
@@ -153,16 +160,11 @@ pub(crate) async fn get_paste(
     }))
 }
 
-async fn verify_recaptcha(token: &str) -> Result<bool, (StatusCode, String)> {
+async fn verify_recaptcha(token: &str, recaptcha_secret: &str) -> Result<bool, (StatusCode, String)> {
     let client = Client::new();
-    let recaptcha_secret = std::env::var("RECAPTCHA_SECRET_KEY").map_err(|_| {
-        (StatusCode::INTERNAL_SERVER_ERROR, "reCAPTCHA secret key not set".to_string())
-    })?;
-
-    // println!("Recaptcha Secret: {recaptcha_secret}");
 
     let params = [
-        ("secret", recaptcha_secret),
+        ("secret", recaptcha_secret.to_string()),
         ("response", token.to_string())
     ];
 

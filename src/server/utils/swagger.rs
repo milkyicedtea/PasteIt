@@ -11,7 +11,7 @@ use crate::routes::pastes::{__path_create_paste, __path_get_paste};
     ),
     info(
         title = "PasteIt API",
-        version = "0.1.0"
+        version = env!("CARGO_PKG_VERSION"),
     )
 )]
 pub(crate) struct ApiDoc;

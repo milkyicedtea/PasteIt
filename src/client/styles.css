@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@import "@mantine/core/styles.css";
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+.grecaptcha-badge {
+  @apply z-999;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Keep line numbers anchored and readable without tinting the editor background. */
+.pasteit-editor .cm-gutters {
+  background: transparent;
+}
+
+.pasteit-editor .cm-editor.cm-focused {
+  @apply outline-none;
+}
