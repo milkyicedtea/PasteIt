@@ -4,7 +4,6 @@ WORKDIR /app
 
 COPY package.json bun.lock vite.config.ts tsconfig.json index.html ./
 COPY src/client ./src/client
-COPY dist ./dist
 RUN bun ci && bun run build
 
 # Build stage with cargo-chef for dependency caching
