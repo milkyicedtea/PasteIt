@@ -1,6 +1,10 @@
 services:
   pasteit:
-    build: .
+    build:
+      context: .
+      # arguments for frontend build
+      args:
+        VITE_RECAPTCHA_SITE_KEY: ${VITE_RECAPTCHA_SITE_KEY}
     image: milkyicedtea/pasteit
     container_name: pasteit
 #    ports:

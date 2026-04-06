@@ -2,6 +2,9 @@
 FROM oven/bun:slim AS frontend-builder
 WORKDIR /app
 
+ARG VITE_RECAPTCHA_SITE_KEY
+ENV VITE_RECAPTCHA_SITE_KEY=$VITE_RECAPTCHA_SITE_KEY
+
 COPY package.json bun.lock vite.config.ts tsconfig.json index.html ./
 COPY src/client ./src/client
 RUN bun ci && bun run build
