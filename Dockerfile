@@ -1,11 +1,12 @@
 # Frontend build
-FROM oven/bun:slim AS frontend-builder
+FROM oven/bun:1.3-slim AS frontend-builder
 WORKDIR /app
 
 ARG VITE_RECAPTCHA_SITE_KEY
 ENV VITE_RECAPTCHA_SITE_KEY=$VITE_RECAPTCHA_SITE_KEY
 
 COPY package.json bun.lock vite.config.ts tsconfig.json index.html ./
+COPY public ./public
 COPY src/client ./src/client
 RUN bun ci && bun run build
 
@@ -47,7 +48,7 @@ COPY --from=builder /app/target/release/pasteit /app/pasteit
 COPY --from=frontend-builder /app/dist /app/dist
 
 # Expose port
-EXPOSE 8000
+EXPOSE 4000
 
 # Run the application
 CMD ["/app/pasteit"]

@@ -1,4 +1,6 @@
-use deadpool_postgres::{Config, ManagerConfig, Pool as PgPool, RecyclingMethod, Runtime, SslMode, tokio_postgres::NoTls};
+use deadpool_postgres::{
+    tokio_postgres::NoTls, Config, ManagerConfig, Pool as PgPool, RecyclingMethod, Runtime, SslMode,
+};
 use std::env;
 
 pub(crate) async fn get_db_pool(key: &str) -> PgPool {

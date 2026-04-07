@@ -1,5 +1,5 @@
-use utoipa::OpenApi;
 use crate::routes::pastes::{__path_create_paste, __path_get_paste};
+use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(

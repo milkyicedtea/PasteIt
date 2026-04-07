@@ -10,6 +10,16 @@ const recaptchaSiteKey = (import.meta.env.VITE_RECAPTCHA_SITE_KEY || '').trim()
 
 export const Route = createRootRoute({
   head: () => ({
+    meta: [
+      {
+        name: 'description',
+        content: 'PasteIt - A lightweight pastebin-like website'
+      },
+      {
+        title: 'PasteIt'
+      }
+    ],
+
     links: [{
       rel: "icon",
       href: "/clipboard.svg"
