@@ -7,17 +7,12 @@
 A lightweight, self-hosted pastebin-like service built with Rust for fast and secure text sharing.
 
 ## Screenshots (click to expand)
-<details>
-<summary>Home page</summary>
-
-![Home page](screenshots/home_page.png)
-</details>
-
-<details>
-  <summary>Paste view</summary>
-
-  ![Paste view](screenshots/paste_screen.png)
-</details>
+<table>
+  <tr>
+    <td><img src="screenshots/home_page.png" alt="Home Page"/></td>
+    <td><img src="screenshots/paste_screen.png" alt="Paste View"/></td>
+  </tr>
+</table>
 
 ## Features
 - Syntax highlighting through [codemirror](https://codemirror.net/)
