@@ -13,7 +13,7 @@ RUN bun ci && bun run build
 # Build stage with cargo-chef for dependency caching
 FROM rust:1.90-slim AS chef
 
-RUN cargo install cargo-chef
+RUN cargo install cargo-chef --locked
 WORKDIR /app
 
 # Prepare recipe
